@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="mobile-web-app-capable" content="yes" />
+<title>Watch Time</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  :root {
+    --bg: #15120F; --card: #1E1A15; --cardAlt: #241F19;
+    --gold: #E4B14C; --goldDim: #8A6E33; --velvet: #8C2F2F;
+    --cream: #F3ECDF; --muted: #9C9184; --line: #332C22;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--cream); font-family: Georgia, serif; }
+  .marquee { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.06em; }
+  .serif { font-family: 'Libre Caslon Text', serif; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+  .sprockets { display: flex; justify-content: space-between; padding: 6px 12px; background: var(--velvet); }
+  .sprockets span { width: 10px; height: 10px; border-radius: 50%; background: var(--bg); margin: 6px 0; }
+  header { border-bottom: 1px solid var(--line); }
+  .header-inner { padding: 28px 0; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+  .eyebrow { display: flex; align-items: center; gap: 8px; color: var(--gold); margin-bottom: 4px; }
+  h1.title { font-size: 52px; margin: 0; }
+  .total-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); text-align: right; }
+  .total-value { font-size: 40px; color: var(--gold); text-align: right; }
+  main { padding: 24px 0 60px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 3px; margin-bottom: 24px; overflow: hidden; }
+  .panel-header { padding: 12px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold); display: flex; align-items: center; justify-content: space-between; width: 100%; background: none; border: none; cursor: pointer; text-align: left; }
+  .panel-body { padding: 0 20px 20px; border-top: 1px dashed var(--line); }
+  .panel-body p { color: var(--muted); font-family: 'Libre Caslon Text', serif; font-size: 14px; padding-top: 12px; }
+  .upload-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 1px dashed var(--goldDim); border-radius: 3px; color: var(--gold); font-family: 'IBM Plex Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 32px; }
+  @media (min-width: 900px) { .grid { grid-template-columns: 2fr 3fr; } }
+  .card-title { font-size: 24px; color: var(--gold); margin: 0; padding: 16px 20px; border-bottom: 1px dashed var(--line); }
+  .form-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .toggle-row { display: flex; gap: 8px; }
+  .toggle-btn { flex: 1; padding: 10px; border-radius: 3px; font-family: 'Libre Caslon Text', serif; font-size: 14px; cursor: pointer; background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  .toggle-btn.active { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .toggle-btn.small.active { background: var(--goldDim); color: var(--cream); border-color: var(--goldDim); }
+  label.field-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); display: block; margin-bottom: 4px; }
+  input[type=text], input[type=number], input[type=date] {
+    width: 100%; padding: 9px 12px; border-radius: 3px; background: var(--cardAlt); color: var(--cream);
+    border: 1px solid var(--line); font-family: 'Libre Caslon Text', serif; font-size: 15px;
+  }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .title-row { display: flex; gap: 8px; }
+  .find-btn { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 3px; background: transparent; color: var(--gold); border: 1px solid var(--goldDim); font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; cursor: pointer; }
+  .hint { font-family: 'IBM Plex Mono', monospace; font-size: 11px; margin-top: 4px; }
+  .hint.good { color: var(--gold); }
+  .hint.muted { color: var(--muted); }
+  .hint.bad { color: #D9756B; }
+  .computed-box { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 3px; background: var(--cardAlt); border: 1px solid var(--goldDim); }
+  .add-btn { width: 100%; padding: 11px; border-radius: 3px; background: var(--velvet); color: var(--cream); border: none; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 0.04em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .stats-panel { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .stat-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 26px; margin-top: 2px; }
+  .stat-sub { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+  .section-title { display: flex; align-items: center; gap: 8px; color: var(--gold); margin-bottom: 12px; }
+  .section-title h3 { font-family: 'Bebas Neue', sans-serif; font-size: 20px; margin: 0; letter-spacing: 0.04em; }
+  .empty-box { padding: 24px; text-align: center; background: var(--card); border: 1px dashed var(--line); border-radius: 3px; color: var(--muted); font-family: 'Libre Caslon Text', serif; font-size: 14px; }
+  ul.entry-list { list-style: none; margin: 0; padding: 0; }
+  ul.entry-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px dashed var(--line); }
+  ul.entry-list li:last-child { border-bottom: none; }
+  .entry-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .entry-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--cardAlt); color: var(--gold); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; }
+  .entry-title { font-family: 'Libre Caslon Text', serif; font-size: 15px; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .entry-sub { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+  .entry-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+  .entry-duration { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--gold); }
+  .delete-btn { background: none; border: none; color: var(--muted); cursor: pointer; opacity: 0.6; font-size: 15px; }
+  .delete-btn:hover { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ===================== BASE DE DONNÉES LOCALE =====================
+  var KNOWN_MOVIES = {
+  "interstellar": { matchedTitle: "Interstellar", year: 2014, runtimeMinutes: 169 },
+  "inception": { matchedTitle: "Inception", year: 2010, runtimeMinutes: 148 },
+  "titanic": { matchedTitle: "Titanic", year: 1997, runtimeMinutes: 195 },
+  "avatar": { matchedTitle: "Avatar", year: 2009, runtimeMinutes: 162 },
+  "avatar la voie de leau": { matchedTitle: "Avatar : La Voie de l'eau", year: 2022, runtimeMinutes: 192 },
+  "le fabuleux destin damelie poulain": { matchedTitle: "Le Fabuleux Destin d'Amélie Poulain", year: 2001, runtimeMinutes: 122 },
+  "intouchables": { matchedTitle: "Intouchables", year: 2011, runtimeMinutes: 112 },
+  "oss 117 le caire nid despions": { matchedTitle: "OSS 117 : Le Caire nid d'espions", year: 2006, runtimeMinutes: 99 },
+  "the dark knight": { matchedTitle: "The Dark Knight", year: 2008, runtimeMinutes: 152 },
+  "the dark knight rises": { matchedTitle: "The Dark Knight Rises", year: 2012, runtimeMinutes: 165 },
+  "batman begins": { matchedTitle: "Batman Begins", year: 2005, runtimeMinutes: 140 },
+  "oppenheimer": { matchedTitle: "Oppenheimer", year: 2023, runtimeMinutes: 180 },
+  "barbie": { matchedTitle: "Barbie", year: 2023, runtimeMinutes: 114 },
+  "dune": { matchedTitle: "Dune", year: 2021, runtimeMinutes: 155 },
+  "dune deuxieme partie": { matchedTitle: "Dune : Deuxième Partie", year: 2024, runtimeMinutes: 166 },
+  "gladiator": { matchedTitle: "Gladiator", year: 2000, runtimeMinutes: 155 },
+  "le seigneur des anneaux la communaute de lanneau": { matchedTitle: "Le Seigneur des anneaux : La Communauté de l'anneau", year: 2001, runtimeMinutes: 178 },
+  "le seigneur des anneaux les deux tours": { matchedTitle: "Le Seigneur des anneaux : Les Deux Tours", year: 2002, runtimeMinutes: 179 },
+  "le seigneur des anneaux le retour du roi": { matchedTitle: "Le Seigneur des anneaux : Le Retour du Roi", year: 2003, runtimeMinutes: 201 },
+  "pulp fiction": { matchedTitle: "Pulp Fiction", year: 1994, runtimeMinutes: 154 },
+  "fight club": { matchedTitle: "Fight Club", year: 1999, runtimeMinutes: 139 },
+  "forrest gump": { matchedTitle: "Forrest Gump", year: 1994, runtimeMinutes: 142 },
+  "matrix": { matchedTitle: "Matrix", year: 1999, runtimeMinutes: 136 },
+  "parasite": { matchedTitle: "Parasite", year: 2019, runtimeMinutes: 132 },
+  "joker": { matchedTitle: "Joker", year: 2019, runtimeMinutes: 122 },
+  "top gun maverick": { matchedTitle: "Top Gun: Maverick", year: 2022, runtimeMinutes: 130 },
+  "spider man across the spider verse": { matchedTitle: "Spider-Man: Across the Spider-Verse", year: 2023, runtimeMinutes: 140 },
+  "avengers endgame": { matchedTitle: "Avengers: Endgame", year: 2019, runtimeMinutes: 181 },
+  "avengers infinity war": { matchedTitle: "Avengers: Infinity War", year: 2018, runtimeMinutes: 149 },
+  "la la land": { matchedTitle: "La La Land", year: 2016, runtimeMinutes: 128 },
+  "whiplash": { matchedTitle: "Whiplash", year: 2014, runtimeMinutes: 107 },
+  "shutter island": { matchedTitle: "Shutter Island", year: 2010, runtimeMinutes: 138 },
+  "django unchained": { matchedTitle: "Django Unchained", year: 2012, runtimeMinutes: 165 },
+  "1917": { matchedTitle: "1917", year: 2019, runtimeMinutes: 119 },
+  // --- Netflix ---
+  "glass onion": { matchedTitle: "Glass Onion : Une histoire à couteaux tirés", year: 2022, runtimeMinutes: 139 },
+  "a couteaux tires": { matchedTitle: "À couteaux tirés (Knives Out)", year: 2019, runtimeMinutes: 130 },
+  "dont look up": { matchedTitle: "Don't Look Up : Déni cosmique", year: 2021, runtimeMinutes: 138 },
+  "the irishman": { matchedTitle: "The Irishman", year: 2019, runtimeMinutes: 209 },
+  "red notice": { matchedTitle: "Red Notice", year: 2021, runtimeMinutes: 118 },
+  "extraction": { matchedTitle: "Extraction", year: 2020, runtimeMinutes: 116 },
+  "extraction 2": { matchedTitle: "Extraction 2", year: 2023, runtimeMinutes: 122 },
+  "6 underground": { matchedTitle: "6 Underground", year: 2019, runtimeMinutes: 128 },
+  "bird box": { matchedTitle: "Bird Box", year: 2018, runtimeMinutes: 124 },
+  "roma": { matchedTitle: "Roma", year: 2018, runtimeMinutes: 135 },
+  "murder mystery": { matchedTitle: "Murder Mystery", year: 2019, runtimeMinutes: 97 },
+  "enola holmes": { matchedTitle: "Enola Holmes", year: 2020, runtimeMinutes: 123 },
+  "the gray man": { matchedTitle: "The Gray Man", year: 2022, runtimeMinutes: 129 },
+  // --- Prime Video ---
+  "air": { matchedTitle: "Air", year: 2023, runtimeMinutes: 111 },
+  "the tomorrow war": { matchedTitle: "The Tomorrow War", year: 2021, runtimeMinutes: 140 },
+  "the beekeeper": { matchedTitle: "The Beekeeper", year: 2024, runtimeMinutes: 105 },
+  "road house": { matchedTitle: "Road House", year: 2024, runtimeMinutes: 121 },
+  "borderlands": { matchedTitle: "Borderlands", year: 2024, runtimeMinutes: 101 },
+  // --- Disney+ / Pixar / Marvel / Star Wars ---
+  "le roi lion": { matchedTitle: "Le Roi Lion", year: 1994, runtimeMinutes: 88 },
+  "frozen la reine des neiges": { matchedTitle: "La Reine des Neiges", year: 2013, runtimeMinutes: 102 },
+  "la reine des neiges 2": { matchedTitle: "La Reine des Neiges 2", year: 2019, runtimeMinutes: 103 },
+  "vaiana": { matchedTitle: "Vaiana", year: 2016, runtimeMinutes: 107 },
+  "encanto": { matchedTitle: "Encanto", year: 2021, runtimeMinutes: 102 },
+  "coco": { matchedTitle: "Coco", year: 2017, runtimeMinutes: 105 },
+  "toy story": { matchedTitle: "Toy Story", year: 1995, runtimeMinutes: 81 },
+  "toy story 3": { matchedTitle: "Toy Story 3", year: 2010, runtimeMinutes: 103 },
+  "toy story 4": { matchedTitle: "Toy Story 4", year: 2019, runtimeMinutes: 100 },
+  "le monde de nemo": { matchedTitle: "Le Monde de Nemo", year: 2003, runtimeMinutes: 100 },
+  "zootopie": { matchedTitle: "Zootopie", year: 2016, runtimeMinutes: 108 },
+  "vice versa": { matchedTitle: "Vice-Versa", year: 2015, runtimeMinutes: 95 },
+  "vice versa 2": { matchedTitle: "Vice-Versa 2", year: 2024, runtimeMinutes: 96 },
+  "luca": { matchedTitle: "Luca", year: 2021, runtimeMinutes: 95 },
+  "alerte rouge": { matchedTitle: "Alerte Rouge (Turning Red)", year: 2022, runtimeMinutes: 100 },
+  "soul": { matchedTitle: "Soul", year: 2020, runtimeMinutes: 100 },
+  "raya et le dernier dragon": { matchedTitle: "Raya et le Dernier Dragon", year: 2021, runtimeMinutes: 107 },
+  "iron man": { matchedTitle: "Iron Man", year: 2008, runtimeMinutes: 126 },
+  "black panther": { matchedTitle: "Black Panther", year: 2018, runtimeMinutes: 134 },
+  "les gardiens de la galaxie": { matchedTitle: "Les Gardiens de la Galaxie", year: 2014, runtimeMinutes: 121 },
+  "doctor strange": { matchedTitle: "Doctor Strange", year: 2016, runtimeMinutes: 115 },
+  "spider man no way home": { matchedTitle: "Spider-Man: No Way Home", year: 2021, runtimeMinutes: 148 },
+  "star wars un nouvel espoir": { matchedTitle: "Star Wars : Un nouvel espoir", year: 1977, runtimeMinutes: 121 },
+  "star wars lempire contre attaque": { matchedTitle: "Star Wars : L'Empire contre-attaque", year: 1980, runtimeMinutes: 124 },
+  "star wars le reveil de la force": { matchedTitle: "Star Wars : Le Réveil de la Force", year: 2015, runtimeMinutes: 138 },
+};
+
+  var KNOWN_SERIES = {
+  "the office": { matchedTitle: "The Office (US)", episodeMinutes: 22, totalEpisodes: 201, totalSeasons: 9, totalMinutes: 4440 },
+  "the office uk": { matchedTitle: "The Office (UK)", episodeMinutes: 29, totalEpisodes: 14, totalSeasons: 2 },
+  "friends": { matchedTitle: "Friends", episodeMinutes: 22, totalEpisodes: 236, totalSeasons: 10, totalMinutes: 5320 },
+  "breaking bad": { matchedTitle: "Breaking Bad", episodeMinutes: 47, totalEpisodes: 62, totalSeasons: 5, totalMinutes: 2905 },
+  "better call saul": { matchedTitle: "Better Call Saul", episodeMinutes: 46, totalEpisodes: 63, totalSeasons: 6 },
+  "game of thrones": { matchedTitle: "Game of Thrones", episodeMinutes: 57, totalEpisodes: 73, totalSeasons: 8, totalMinutes: 4220 },
+  "stranger things": { matchedTitle: "Stranger Things", episodeMinutes: 51, totalEpisodes: 42, totalSeasons: 4 },
+  "la casa de papel": { matchedTitle: "La Casa de Papel", episodeMinutes: 50, totalEpisodes: 41, totalSeasons: 5 },
+  "money heist": { matchedTitle: "La Casa de Papel (Money Heist)", episodeMinutes: 50, totalEpisodes: 41, totalSeasons: 5 },
+  "dark": { matchedTitle: "Dark", episodeMinutes: 55, totalEpisodes: 26, totalSeasons: 3 },
+  "narcos": { matchedTitle: "Narcos", episodeMinutes: 49, totalEpisodes: 30, totalSeasons: 3 },
+  "the witcher": { matchedTitle: "The Witcher", episodeMinutes: 60, totalEpisodes: 24, totalSeasons: 3 },
+  "the mandalorian": { matchedTitle: "The Mandalorian", episodeMinutes: 38, totalEpisodes: 24, totalSeasons: 3 },
+  "house of cards": { matchedTitle: "House of Cards", episodeMinutes: 51, totalEpisodes: 73, totalSeasons: 6 },
+  "the boys": { matchedTitle: "The Boys", episodeMinutes: 60, totalEpisodes: 32, totalSeasons: 4 },
+  "chernobyl": { matchedTitle: "Chernobyl", episodeMinutes: 63, totalEpisodes: 5, totalSeasons: 1 },
+  "sherlock": { matchedTitle: "Sherlock", episodeMinutes: 88, totalEpisodes: 13, totalSeasons: 4 },
+  "peaky blinders": { matchedTitle: "Peaky Blinders", episodeMinutes: 58, totalEpisodes: 36, totalSeasons: 6 },
+  "fargo": { matchedTitle: "Fargo", episodeMinutes: 51, totalEpisodes: 51, totalSeasons: 5 },
+  "true detective": { matchedTitle: "True Detective", episodeMinutes: 55, totalEpisodes: 33, totalSeasons: 4 },
+  "rick and morty": { matchedTitle: "Rick and Morty", episodeMinutes: 22, totalEpisodes: 71, totalSeasons: 7 },
+  "rick et morty": { matchedTitle: "Rick and Morty", episodeMinutes: 22, totalEpisodes: 71, totalSeasons: 7 },
+  "greys anatomy": { matchedTitle: "Grey's Anatomy", episodeMinutes: 43, totalEpisodes: 431, totalSeasons: 20 },
+  "lupin": { matchedTitle: "Lupin", episodeMinutes: 47, totalEpisodes: 20, totalSeasons: 3 },
+  "the crown": { matchedTitle: "The Crown", episodeMinutes: 57, totalEpisodes: 60, totalSeasons: 6 },
+  "succession": { matchedTitle: "Succession", episodeMinutes: 55, totalEpisodes: 39, totalSeasons: 4 },
+  "the walking dead": { matchedTitle: "The Walking Dead", episodeMinutes: 44, totalEpisodes: 177, totalSeasons: 11 },
+  "how i met your mother": { matchedTitle: "How I Met Your Mother", episodeMinutes: 22, totalEpisodes: 208, totalSeasons: 9 },
+  "the big bang theory": { matchedTitle: "The Big Bang Theory", episodeMinutes: 20, totalEpisodes: 279, totalSeasons: 12 },
+  "brooklyn nine nine": { matchedTitle: "Brooklyn Nine-Nine", episodeMinutes: 22, totalEpisodes: 153, totalSeasons: 8 },
+  "vikings": { matchedTitle: "Vikings", episodeMinutes: 44, totalEpisodes: 89, totalSeasons: 6 },
+  "outer banks": { matchedTitle: "Outer Banks", episodeMinutes: 50, totalEpisodes: 30, totalSeasons: 4 },
+  "euphoria": { matchedTitle: "Euphoria", episodeMinutes: 55, totalEpisodes: 18, totalSeasons: 2 },
+  // --- Netflix ---
+  "squid game": { matchedTitle: "Squid Game", episodeMinutes: 50, totalEpisodes: 22, totalSeasons: 3, totalMinutes: 1100 },
+  "ozark": { matchedTitle: "Ozark", episodeMinutes: 60, totalEpisodes: 44, totalSeasons: 4 },
+  "the umbrella academy": { matchedTitle: "The Umbrella Academy", episodeMinutes: 55, totalEpisodes: 40, totalSeasons: 4 },
+  "you": { matchedTitle: "You", episodeMinutes: 47, totalEpisodes: 50, totalSeasons: 5 },
+  "bridgerton": { matchedTitle: "Bridgerton", episodeMinutes: 60, totalEpisodes: 28, totalSeasons: 3 },
+  "emily in paris": { matchedTitle: "Emily in Paris", episodeMinutes: 28, totalEpisodes: 40, totalSeasons: 4 },
+  "cobra kai": { matchedTitle: "Cobra Kai", episodeMinutes: 30, totalEpisodes: 65, totalSeasons: 6 },
+  "the queens gambit": { matchedTitle: "Le Jeu de la Dame", episodeMinutes: 57, totalEpisodes: 7, totalSeasons: 1 },
+  "sex education": { matchedTitle: "Sex Education", episodeMinutes: 50, totalEpisodes: 33, totalSeasons: 4 },
+  "elite": { matchedTitle: "Élite", episodeMinutes: 50, totalEpisodes: 64, totalSeasons: 8 },
+  "beef": { matchedTitle: "Beef", episodeMinutes: 35, totalEpisodes: 10, totalSeasons: 1 },
+  "wednesday": { matchedTitle: "Wednesday", episodeMinutes: 50, totalEpisodes: 16, totalSeasons: 2 },
+  "mercredi": { matchedTitle: "Mercredi (Wednesday)", episodeMinutes: 50, totalEpisodes: 16, totalSeasons: 2 },
+  "the last of us": { matchedTitle: "The Last of Us", episodeMinutes: 55, totalEpisodes: 16, totalSeasons: 2 },
+  // --- Prime Video ---
+  "the marvelous mrs maisel": { matchedTitle: "The Marvelous Mrs. Maisel", episodeMinutes: 55, totalEpisodes: 43, totalSeasons: 5 },
+  "jack ryan": { matchedTitle: "Jack Ryan", episodeMinutes: 50, totalEpisodes: 32, totalSeasons: 4 },
+  "the wheel of time": { matchedTitle: "The Wheel of Time", episodeMinutes: 55, totalEpisodes: 24, totalSeasons: 3 },
+  "fallout": { matchedTitle: "Fallout", episodeMinutes: 60, totalEpisodes: 8, totalSeasons: 1 },
+  "reacher": { matchedTitle: "Reacher", episodeMinutes: 48, totalEpisodes: 24, totalSeasons: 3 },
+  "the rings of power": { matchedTitle: "Le Seigneur des Anneaux : Les Anneaux de Pouvoir", episodeMinutes: 65, totalEpisodes: 16, totalSeasons: 2 },
+  "fleabag": { matchedTitle: "Fleabag", episodeMinutes: 26, totalEpisodes: 12, totalSeasons: 2 },
+  "invincible": { matchedTitle: "Invincible", episodeMinutes: 48, totalEpisodes: 24, totalSeasons: 3 },
+  "good omens": { matchedTitle: "Good Omens", episodeMinutes: 50, totalEpisodes: 12, totalSeasons: 2 },
+  // --- Disney+ / Marvel / Star Wars ---
+  "wandavision": { matchedTitle: "WandaVision", episodeMinutes: 35, totalEpisodes: 9, totalSeasons: 1 },
+  "loki": { matchedTitle: "Loki", episodeMinutes: 47, totalEpisodes: 12, totalSeasons: 2 },
+  "ahsoka": { matchedTitle: "Ahsoka", episodeMinutes: 50, totalEpisodes: 8, totalSeasons: 1 },
+  "obi wan kenobi": { matchedTitle: "Obi-Wan Kenobi", episodeMinutes: 45, totalEpisodes: 6, totalSeasons: 1 },
+  "she hulk": { matchedTitle: "She-Hulk : Avocate", episodeMinutes: 35, totalEpisodes: 9, totalSeasons: 1 },
+  "moon knight": { matchedTitle: "Moon Knight", episodeMinutes: 48, totalEpisodes: 6, totalSeasons: 1 },
+  "hawkeye": { matchedTitle: "Hawkeye", episodeMinutes: 45, totalEpisodes: 6, totalSeasons: 1 },
+  "falcon et le soldat de lhiver": { matchedTitle: "Falcon et le Soldat de l'Hiver", episodeMinutes: 45, totalEpisodes: 6, totalSeasons: 1 },
+  "andor": { matchedTitle: "Andor", episodeMinutes: 42, totalEpisodes: 24, totalSeasons: 2 },
+  "the bad batch": { matchedTitle: "Star Wars: The Bad Batch", episodeMinutes: 30, totalEpisodes: 47, totalSeasons: 3 },
+  "the mandalorian saison": { matchedTitle: "The Mandalorian", episodeMinutes: 38, totalEpisodes: 24, totalSeasons: 3 },
+  // --- ajouts issus de l'import IMDb (estimations basées sur des données générales, à vérifier au besoin) ---
+  "animal kingdom": { matchedTitle: "Animal Kingdom", episodeMinutes: 44, totalEpisodes: 60, totalSeasons: 6 },
+  "my hero academia": { matchedTitle: "My Hero Academia", episodeMinutes: 24, totalEpisodes: 159, totalSeasons: 7 },
+  "naruto": { matchedTitle: "Naruto", episodeMinutes: 23, totalEpisodes: 220, totalSeasons: 9 },
+  "jujutsu kaisen": { matchedTitle: "Jujutsu Kaisen", episodeMinutes: 24, totalEpisodes: 47, totalSeasons: 2 },
+  "one piece": { matchedTitle: "One Piece (série live action)", episodeMinutes: 55, totalEpisodes: 8, totalSeasons: 1 },
+  "killing eve": { matchedTitle: "Killing Eve", episodeMinutes: 43, totalEpisodes: 32, totalSeasons: 4 },
+  "the chosen": { matchedTitle: "The Chosen", episodeMinutes: 50, totalEpisodes: 40, totalSeasons: 5 },
+  "one punch man": { matchedTitle: "One Punch Man", episodeMinutes: 24, totalEpisodes: 24, totalSeasons: 2 },
+  "alice in borderland": { matchedTitle: "Alice in Borderland", episodeMinutes: 55, totalEpisodes: 17, totalSeasons: 2 },
+  "sense8": { matchedTitle: "Sense8", episodeMinutes: 60, totalEpisodes: 23, totalSeasons: 2 },
+  "severance": { matchedTitle: "Severance", episodeMinutes: 52, totalEpisodes: 19, totalSeasons: 2 },
+  "the white lotus": { matchedTitle: "The White Lotus", episodeMinutes: 58, totalEpisodes: 19, totalSeasons: 3 },
+  "silo": { matchedTitle: "Silo", episodeMinutes: 50, totalEpisodes: 20, totalSeasons: 2 },
+  "black mirror": { matchedTitle: "Black Mirror", episodeMinutes: 55, totalEpisodes: 28, totalSeasons: 7 },
+  "resident alien": { matchedTitle: "Resident Alien", episodeMinutes: 42, totalEpisodes: 50, totalSeasons: 4 },
+  "frieren": { matchedTitle: "Frieren", episodeMinutes: 24, totalEpisodes: 28, totalSeasons: 1 },
+  "overlord": { matchedTitle: "Overlord", episodeMinutes: 24, totalEpisodes: 52, totalSeasons: 4 },
+  "tokyo ghoul": { matchedTitle: "Tokyo Ghoul", episodeMinutes: 24, totalEpisodes: 24, totalSeasons: 2 },
+  "blue period": { matchedTitle: "Blue Period", episodeMinutes: 24, totalEpisodes: 12, totalSeasons: 1 },
+  "black clover": { matchedTitle: "Black Clover", episodeMinutes: 24, totalEpisodes: 170, totalSeasons: 1 },
+  "dorohedoro": { matchedTitle: "Dorohedoro", episodeMinutes: 24, totalEpisodes: 12, totalSeasons: 1 },
+  "blue lock": { matchedTitle: "Blue Lock", episodeMinutes: 24, totalEpisodes: 35, totalSeasons: 2 },
+  "my dress up darling": { matchedTitle: "My Dress-Up Darling", episodeMinutes: 24, totalEpisodes: 24, totalSeasons: 2 },
+  "dandadan": { matchedTitle: "Dandadan", episodeMinutes: 24, totalEpisodes: 24, totalSeasons: 2 },
+  "sakamoto days": { matchedTitle: "Sakamoto Days", episodeMinutes: 24, totalEpisodes: 11, totalSeasons: 1 },
+  "solar opposites": { matchedTitle: "Solar Opposites", episodeMinutes: 22, totalEpisodes: 47, totalSeasons: 5 },
+  "altered carbon": { matchedTitle: "Altered Carbon", episodeMinutes: 57, totalEpisodes: 18, totalSeasons: 2 },
+  "future man": { matchedTitle: "Future Man", episodeMinutes: 28, totalEpisodes: 39, totalSeasons: 3 },
+  "lost les disparus": { matchedTitle: "Lost : Les Disparus", episodeMinutes: 43, totalEpisodes: 121, totalSeasons: 6 },
+  "kuroko no basuke": { matchedTitle: "Kuroko no Basuke", episodeMinutes: 24, totalEpisodes: 75, totalSeasons: 3 },
+  "my name": { matchedTitle: "My Name", episodeMinutes: 55, totalEpisodes: 8, totalSeasons: 1 },
+  "mask girl": { matchedTitle: "Mask Girl", episodeMinutes: 55, totalEpisodes: 7, totalSeasons: 1 },
+  "ghosts fantomes a la maison": { matchedTitle: "Ghosts : Fantômes à la maison", episodeMinutes: 22, totalEpisodes: 76, totalSeasons: 4 },
+  "hoops": { matchedTitle: "Hoops", episodeMinutes: 26, totalEpisodes: 10, totalSeasons: 1 },
+  "devil may cry": { matchedTitle: "Devil May Cry", episodeMinutes: 37, totalEpisodes: 8, totalSeasons: 1 },
+  "dead boy detectives": { matchedTitle: "Dead Boy Detectives", episodeMinutes: 50, totalEpisodes: 8, totalSeasons: 1 },
+  "the recruit": { matchedTitle: "The Recruit", episodeMinutes: 50, totalEpisodes: 16, totalSeasons: 2 },
+  "fire country pompiers sur appel": { matchedTitle: "Fire Country : Pompiers sur appel", episodeMinutes: 43, totalEpisodes: 70, totalSeasons: 4 },
+  "how to sell drugs online fast": { matchedTitle: "How to Sell Drugs Online (Fast)", episodeMinutes: 35, totalEpisodes: 18, totalSeasons: 3 },
+};
+
+  function normalizeKey(str) {
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function containsAsWords(haystack, needle) {
+    if (!needle) return false;
+    var escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp("(^|\\s)" + escaped + "($|\\s)").test(haystack);
+  }
+
+  function findInDatabase(title, db) {
+    var key = normalizeKey(title);
+    if (db[key]) return db[key];
+    var bestMatch = null, bestLength = 0;
+    for (var dbKey in db) {
+      if (!db.hasOwnProperty(dbKey)) continue;
+      var shorter = Math.min(key.length, dbKey.length);
+      var longer = Math.max(key.length, dbKey.length);
+      var coversEnough = shorter / longer >= 0.6;
+      var wordMatch = containsAsWords(key, dbKey) || containsAsWords(dbKey, key);
+      if (wordMatch && coversEnough && dbKey.length > bestLength) {
+        bestMatch = db[dbKey];
+        bestLength = dbKey.length;
+      }
+    }
+    return bestMatch;
+  }
+
+  // ===================== UTILITAIRES =====================
+  function formatDuration(totalMinutes) {
+    var d = Math.floor(totalMinutes / 1440);
+    var h = Math.floor((totalMinutes % 1440) / 60);
+    var m = totalMinutes % 60;
+    if (d > 0) {
+      var parts = [d + " j"];
+      if (h > 0) parts.push(h + " h");
+      if (m > 0) parts.push(m + " min");
+      return parts.join(" ");
+    }
+    if (h === 0) return m + " min";
+    if (m === 0) return h + " h";
+    return h + " h " + m + " min";
+  }
+
+  function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function formatDateFR(iso) {
+    var d = new Date(iso + "T00:00:00");
+    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function uid() {
+    return Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  }
+
+  // ===================== STOCKAGE (localStorage) =====================
+  function loadEntries() {
+    try {
+      var raw = localStorage.getItem("watchtime:watch-entries");
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function saveEntries(entries) {
+    try {
+      localStorage.setItem("watchtime:watch-entries", JSON.stringify(entries));
+    } catch (e) {
+      console.error("Erreur de sauvegarde", e);
+    }
+  }
+
+  // ===================== PARSEUR CSV (mini, sans dépendance) =====================
+  function parseCSV(text) {
+    var lines = text.split(/\r?\n/).filter(function (l) { return l.length > 0; });
+    if (lines.length === 0) return [];
+    var headers = parseCSVLine(lines[0]);
+    var rows = [];
+    for (var i = 1; i < lines.length; i++) {
+      var vals = parseCSVLine(lines[i]);
+      var obj = {};
+      for (var j = 0; j < headers.length; j++) obj[headers[j]] = vals[j] !== undefined ? vals[j] : "";
+      rows.push(obj);
+    }
+    return rows;
+  }
+  function parseCSVLine(line) {
+    var result = [], cur = "", inQuotes = false;
+    for (var i = 0; i < line.length; i++) {
+      var c = line[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (line[i + 1] === '"') { cur += '"'; i++; } else { inQuotes = false; }
+        } else { cur += c; }
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ",") { result.push(cur); cur = ""; }
+        else cur += c;
+      }
+    }
+    result.push(cur);
+    return result;
+  }
+
+  // ===================== IMPORT IMDB =====================
+  var MOVIE_LIKE_TYPES = { movie: 1, tvMovie: 1, video: 1, short: 1, tvSpecial: 1, documentary: 1 };
+  var SERIES_LIKE_TYPES = { tvSeries: 1, tvMiniSeries: 1 };
+
+  function parseImdbRuntime(raw) {
+    var n = parseInt(String(raw).replace(/[^\d]/g, ""), 10);
+    return isFinite(n) && n > 0 ? n : null;
+  }
+
+  function processImdbRows(rows, existingEntries) {
+    var existingIds = {};
+    existingEntries.forEach(function (e) { if (e.imdbId) existingIds[e.imdbId] = true; });
+    var newEntries = [], unmatched = [], skippedDuplicate = 0;
+
+    rows.forEach(function (row) {
+      var imdbId = row["Const"] || row["const"];
+      var rawTitle = (row["Title"] || row["title"] || "").trim();
+      var titleType = row["Title Type"] || row["titleType"] || "movie";
+      var csvRuntime = parseImdbRuntime(row["Runtime (mins)"]);
+      var dateRated = row["Date Rated"] || row["Release Date"] || null;
+      var date = dateRated && /^\d{4}-\d{2}-\d{2}/.test(dateRated) ? dateRated.slice(0, 10) : todayISO();
+
+      if (!rawTitle) return;
+      if (imdbId && existingIds[imdbId]) { skippedDuplicate++; return; }
+
+      var isSeries = !!SERIES_LIKE_TYPES[titleType];
+      var isMovieLike = !!MOVIE_LIKE_TYPES[titleType] || (!isSeries && titleType !== "tvEpisode");
+      if (!isSeries && !isMovieLike) return;
+
+      if (isSeries) {
+        var dbMatch = findInDatabase(rawTitle, KNOWN_SERIES);
+        var minutes, episodes, episodeMinutes, note;
+        if (dbMatch && dbMatch.totalMinutes) {
+          minutes = dbMatch.totalMinutes;
+          note = "durée totale exacte (base locale)";
+        } else if (dbMatch) {
+          minutes = dbMatch.episodeMinutes * dbMatch.totalEpisodes;
+          episodes = dbMatch.totalEpisodes;
+          episodeMinutes = dbMatch.episodeMinutes;
+          note = "estimée (moyenne épisode × nb épisodes)";
+        } else if (csvRuntime) {
+          minutes = csvRuntime;
+          note = "1 épisode seulement (durée totale inconnue)";
+          unmatched.push(rawTitle);
+        } else {
+          unmatched.push(rawTitle);
+          return;
+        }
+        newEntries.push({
+          id: uid(), title: dbMatch ? dbMatch.matchedTitle : rawTitle, type: "series",
+          minutes: minutes, episodes: episodes || null, episodeMinutes: episodeMinutes || null,
+          date: date, imdbId: imdbId || null, importNote: note
+        });
+      } else {
+        var dbMatchM = findInDatabase(rawTitle, KNOWN_MOVIES);
+        var minutesM = csvRuntime || (dbMatchM ? dbMatchM.runtimeMinutes : null);
+        if (!minutesM) { unmatched.push(rawTitle); return; }
+        newEntries.push({
+          id: uid(), title: dbMatchM ? dbMatchM.matchedTitle : rawTitle, type: "movie",
+          minutes: minutesM, episodes: null, episodeMinutes: null,
+          date: date, imdbId: imdbId || null,
+          importNote: csvRuntime ? "durée exacte (IMDb)" : "durée exacte (base locale)"
+        });
+      }
+    });
+
+    return { newEntries: newEntries, skippedDuplicate: skippedDuplicate, unmatched: unmatched };
+  }
+
+  // ===================== ÉTAT =====================
+  var state = {
+    entries: loadEntries(),
+    type: "movie",
+    seriesMode: "episodes",
+    title: "",
+    movieMinutes: "",
+    episodes: "",
+    episodeMinutes: "",
+    seriesTotalHours: "",
+    seriesTotalMinutes: "",
+    date: todayISO(),
+    formError: "",
+    lookupStatus: "idle",
+    lookupInfo: null,
+    showImport: false,
+    importStatus: "idle",
+    importSummary: null
+  };
+
+  function computedTotal() {
+    if (state.type === "movie") return Number(state.movieMinutes) || 0;
+    if (state.seriesMode === "episodes") return (Number(state.episodes) || 0) * (Number(state.episodeMinutes) || 0);
+    return (Number(state.seriesTotalHours) || 0) * 60 + (Number(state.seriesTotalMinutes) || 0);
+  }
+
+  function resetForm() {
+    state.title = ""; state.movieMinutes = ""; state.episodes = ""; state.episodeMinutes = "";
+    state.seriesTotalHours = ""; state.seriesTotalMinutes = ""; state.date = todayISO();
+    state.formError = ""; state.lookupStatus = "idle"; state.lookupInfo = null;
+  }
+
+  function handleLookup() {
+    if (!state.title.trim()) { state.formError = "Tape d'abord un titre à rechercher."; render(); return; }
+    var db = state.type === "movie" ? KNOWN_MOVIES : KNOWN_SERIES;
+    var found = findInDatabase(state.title, db);
+    if (!found) {
+      state.lookupStatus = "error";
+      state.formError = "Ce titre n'est pas dans la base locale. Renseigne la durée manuellement.";
+      render(); return;
+    }
+    if (state.type === "movie") {
+      state.movieMinutes = String(found.runtimeMinutes);
+    } else if (state.seriesMode === "total" && found.totalMinutes) {
+      state.seriesTotalHours = String(Math.floor(found.totalMinutes / 60));
+      state.seriesTotalMinutes = String(found.totalMinutes % 60);
+    } else if (state.seriesMode === "total" && !found.totalMinutes) {
+      state.lookupStatus = "error";
+      state.formError = "Le total exact de cette série n'est pas connu. Passe en mode épisodes ou saisis-le à la main.";
+      render(); return;
+    } else {
+      state.seriesMode = "episodes";
+      state.episodeMinutes = String(found.episodeMinutes);
+    }
+    state.lookupInfo = found;
+    state.lookupStatus = "done";
+    state.formError = "";
+    render();
+  }
+
+  function handleAdd() {
+    if (!state.title.trim()) { state.formError = "Donne un titre à ce que tu as regardé."; render(); return; }
+    var total = computedTotal();
+    if (total <= 0) {
+      state.formError = state.type === "movie"
+        ? "Indique la durée du film en minutes."
+        : (state.seriesMode === "episodes" ? "Indique le nombre d'épisodes et la durée d'un épisode." : "Indique la durée totale de la série.");
+      render(); return;
+    }
+    var entry = {
+      id: uid(), title: state.title.trim(), type: state.type, minutes: total,
+      episodes: state.type === "series" && state.seriesMode === "episodes" ? Number(state.episodes) : null,
+      episodeMinutes: state.type === "series" && state.seriesMode === "episodes" ? Number(state.episodeMinutes) : null,
+      date: state.date
+    };
+    state.entries = [entry].concat(state.entries);
+    saveEntries(state.entries);
+    resetForm();
+    render();
+  }
+
+  function handleDelete(id) {
+    state.entries = state.entries.filter(function (e) { return e.id !== id; });
+    saveEntries(state.entries);
+    render();
+  }
+
+  function handleImportFile(file) {
+    state.importStatus = "loading";
+    state.importSummary = null;
+    render();
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var rows = parseCSV(reader.result);
+        var result = processImdbRows(rows, state.entries);
+        state.entries = result.newEntries.concat(state.entries);
+        saveEntries(state.entries);
+        state.importSummary = { added: result.newEntries.length, skippedDuplicate: result.skippedDuplicate, unmatched: result.unmatched };
+        state.importStatus = "done";
+      } catch (e) {
+        console.error(e);
+        state.importStatus = "error";
+      }
+      render();
+    };
+    reader.onerror = function () { state.importStatus = "error"; render(); };
+    reader.readAsText(file);
+  }
+
+  // ===================== RENDU =====================
+  function sprockets(n) {
+    var s = '<div class="sprockets">';
+    for (var i = 0; i < n; i++) s += "<span></span>";
+    return s + "</div>";
+  }
+
+  function renderEntryList(items) {
+    if (items.length === 0) return "";
+    var html = sprockets(16) + '<ul class="entry-list">';
+    items.forEach(function (e) {
+      var icon = e.type === "movie" ? "🎬" : "📺";
+      var sub = (e.type === "series" && e.episodes ? e.episodes + " ép. × " + e.episodeMinutes + " min · " : "") + formatDateFR(e.date);
+      html += '<li>' +
+        '<div class="entry-left">' +
+        '<div class="entry-icon">' + icon + '</div>' +
+        '<div style="min-width:0;">' +
+        '<div class="entry-title">' + escapeHtml(e.title) + '</div>' +
+        '<div class="entry-sub">' + sub + '</div>' +
+        '</div></div>' +
+        '<div class="entry-right">' +
+        '<span class="entry-duration">' + formatDuration(e.minutes) + '</span>' +
+        '<button class="delete-btn" data-delete="' + e.id + '">🗑️</button>' +
+        '</div></li>';
+    });
+    html += "</ul>" + sprockets(16);
+    return html;
+  }
+
+  function render() {
+    var entries = state.entries;
+    var totalMinutes = entries.reduce(function (s, e) { return s + e.minutes; }, 0);
+    var movies = entries.filter(function (e) { return e.type === "movie"; });
+    var series = entries.filter(function (e) { return e.type === "series"; });
+    var movieMinutesTotal = movies.reduce(function (s, e) { return s + e.minutes; }, 0);
+    var seriesMinutesTotal = series.reduce(function (s, e) { return s + e.minutes; }, 0);
+    var sortedMovies = movies.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+    var sortedSeries = series.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+    var total = computedTotal();
+
+    var html = "";
+
+    // Header
+    html += '<header>' + sprockets(20) +
+      '<div class="wrap header-inner">' +
+      '<div><div class="eyebrow mono">🎟️ <span style="text-transform:uppercase;letter-spacing:0.08em;font-size:12px;">Votre séance personnelle</span></div>' +
+      '<h1 class="title marquee">WATCH TIME</h1></div>' +
+      '<div><div class="total-label mono">Temps total au visionnage</div>' +
+      '<div class="total-value marquee">' + formatDuration(totalMinutes) + '</div></div>' +
+      '</div>' + sprockets(20) + '</header>';
+
+    html += '<main class="wrap">';
+
+    // Import panel
+    html += '<div class="panel">' +
+      '<button class="panel-header" id="toggleImport">' +
+      '<span>📤 Importer mon historique IMDb</span><span>' + (state.showImport ? "−" : "+") + '</span></button>';
+    if (state.showImport) {
+      html += '<div class="panel-body">' +
+        '<p>Exporte tes notes IMDb en CSV (ou utilise le fichier généré depuis ta liste), puis choisis-le ci-dessous.</p>' +
+        '<label class="upload-btn">📤 ' + (state.importStatus === "loading" ? "Import en cours…" : "Choisir le fichier CSV") +
+        '<input type="file" accept=".csv" id="importInput" style="display:none;"></label>';
+      if (state.importStatus === "done" && state.importSummary) {
+        html += '<p class="hint good" style="margin-top:8px;">' + state.importSummary.added + ' titre(s) ajouté(s) · ' + state.importSummary.skippedDuplicate + ' déjà présent(s)</p>';
+        if (state.importSummary.unmatched.length > 0) {
+          html += '<p class="hint muted">Durée introuvable pour : ' + state.importSummary.unmatched.slice(0, 8).map(escapeHtml).join(", ") + (state.importSummary.unmatched.length > 8 ? "…" : "") + '</p>';
+        }
+      }
+      if (state.importStatus === "error") {
+        html += '<p class="hint bad">Le fichier n\'a pas pu être lu.</p>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+
+    html += '<div class="grid">';
+
+    // Form column
+    html += '<div>';
+    html += '<div class="panel"><h2 class="card-title marquee">Nouvelle entrée</h2><div class="form-body">';
+
+    html += '<div class="toggle-row">' +
+      '<button class="toggle-btn' + (state.type === "movie" ? " active" : "") + '" data-type="movie">🎬 Film</button>' +
+      '<button class="toggle-btn' + (state.type === "series" ? " active" : "") + '" data-type="series">📺 Série</button>' +
+      '</div>';
+
+    html += '<div><label class="field-label">Titre</label><div class="title-row">' +
+      '<input type="text" id="titleInput" value="' + escapeHtml(state.title) + '" placeholder="' + (state.type === "movie" ? "Ex. Interstellar" : "Ex. The Office") + '">' +
+      '<button class="find-btn" id="findBtn">🔍 Trouver</button></div>';
+    if (state.lookupStatus === "error") {
+      html += '<p class="hint muted">Astuce : pour un titre récent ou confidentiel, la durée manuelle reste la solution.</p>';
+    }
+    if (state.lookupStatus === "done" && state.lookupInfo) {
+      var li = state.lookupInfo;
+      html += '<p class="hint good">' + (state.type === "movie"
+        ? escapeHtml(li.matchedTitle) + (li.year ? " (" + li.year + ")" : "") + " · " + li.runtimeMinutes + " min trouvées"
+        : escapeHtml(li.matchedTitle) + " · " + li.episodeMinutes + " min/ép." + (li.totalEpisodes ? " · " + li.totalEpisodes + " ép. au total" : "")) + '</p>';
+    }
+    html += '</div>';
+
+    if (state.type === "movie") {
+      html += '<div><label class="field-label">Durée (minutes)</label>' +
+        '<input type="number" id="movieMinutesInput" value="' + escapeHtml(state.movieMinutes) + '" placeholder="Ex. 169"></div>';
+    } else {
+      html += '<div class="toggle-row">' +
+        '<button class="toggle-btn small' + (state.seriesMode === "episodes" ? " active" : "") + '" data-seriesmode="episodes" style="font-size:12px;">Épisodes × durée</button>' +
+        '<button class="toggle-btn small' + (state.seriesMode === "total" ? " active" : "") + '" data-seriesmode="total" style="font-size:12px;">Durée totale</button>' +
+        '</div>';
+      if (state.seriesMode === "episodes") {
+        html += '<div class="row2">' +
+          '<div><label class="field-label">Épisodes vus</label><input type="number" id="episodesInput" value="' + escapeHtml(state.episodes) + '" placeholder="Ex. 22"></div>' +
+          '<div><label class="field-label">Min. / épisode</label><input type="number" id="episodeMinutesInput" value="' + escapeHtml(state.episodeMinutes) + '" placeholder="Ex. 22"></div>' +
+          '</div>';
+      } else {
+        html += '<div class="row2">' +
+          '<div><label class="field-label">Heures</label><input type="number" id="seriesHoursInput" value="' + escapeHtml(state.seriesTotalHours) + '" placeholder="Ex. 9"></div>' +
+          '<div><label class="field-label">Minutes</label><input type="number" id="seriesMinutesInput" value="' + escapeHtml(state.seriesTotalMinutes) + '" placeholder="Ex. 30"></div>' +
+          '</div>';
+      }
+    }
+
+    html += '<div><label class="field-label">Date</label><input type="date" id="dateInput" value="' + state.date + '"></div>';
+
+    if (total > 0) {
+      html += '<div class="computed-box"><span class="serif" style="color:var(--muted);font-size:14px;">Temps calculé</span>' +
+        '<span class="mono" style="color:var(--gold);font-size:14px;">' + formatDuration(total) + '</span></div>';
+    }
+
+    if (state.formError) {
+      html += '<p class="hint bad" style="font-size:14px;">' + escapeHtml(state.formError) + '</p>';
+    }
+
+    html += '<button class="add-btn" id="addBtn">➕ Ajouter à la bibliothèque</button>';
+    html += '</div></div>';
+
+    // Stats
+    html += '<div class="panel stats-panel">' +
+      '<div><div class="stat-label">🎬 Films</div><div class="stat-value marquee">' + movies.length + '</div><div class="stat-sub">' + formatDuration(movieMinutesTotal) + '</div></div>' +
+      '<div><div class="stat-label">📺 Séries</div><div class="stat-value marquee">' + series.length + '</div><div class="stat-sub">' + formatDuration(seriesMinutesTotal) + '</div></div>' +
+      '</div>';
+
+    html += '</div>'; // end form column
+
+    // Library column
+    html += '<div>';
+    html += '<div class="section-title"><span>⏱️</span><h2 class="marquee" style="font-size:24px;">Bibliothèque</h2></div>';
+
+    if (entries.length === 0) {
+      html += '<div class="empty-box">L\'écran est encore vide. Ajoute ton premier film ou ta première série.</div>';
+    } else {
+      html += '<div class="section-title"><span>🎬</span><h3>Films <span style="color:var(--muted);">· ' + movies.length + '</span></h3></div>';
+      html += movies.length === 0
+        ? '<div class="empty-box" style="margin-bottom:24px;">Aucun film pour l\'instant.</div>'
+        : '<div class="panel">' + renderEntryList(sortedMovies) + '</div>';
+
+      html += '<div class="section-title" style="margin-top:24px;"><span>📺</span><h3>Séries <span style="color:var(--muted);">· ' + series.length + '</span></h3></div>';
+      html += series.length === 0
+        ? '<div class="empty-box">Aucune série pour l\'instant.</div>'
+        : '<div class="panel">' + renderEntryList(sortedSeries) + '</div>';
+    }
+
+    html += '</div>'; // end library column
+    html += '</div>'; // end grid
+    html += '</main>';
+
+    document.getElementById("root").innerHTML = html;
+    attachEvents();
+  }
+
+  function attachEvents() {
+    var root = document.getElementById("root");
+
+    var toggleImport = document.getElementById("toggleImport");
+    if (toggleImport) toggleImport.onclick = function () { state.showImport = !state.showImport; render(); };
+
+    var importInput = document.getElementById("importInput");
+    if (importInput) importInput.onchange = function (e) {
+      if (e.target.files && e.target.files[0]) handleImportFile(e.target.files[0]);
+    };
+
+    root.querySelectorAll("[data-type]").forEach(function (btn) {
+      btn.onclick = function () { state.type = btn.getAttribute("data-type"); render(); };
+    });
+    root.querySelectorAll("[data-seriesmode]").forEach(function (btn) {
+      btn.onclick = function () { state.seriesMode = btn.getAttribute("data-seriesmode"); render(); };
+    });
+
+    var titleInput = document.getElementById("titleInput");
+    if (titleInput) {
+      titleInput.oninput = function () { state.title = titleInput.value; state.lookupStatus = "idle"; state.lookupInfo = null; };
+      titleInput.focus();
+      titleInput.setSelectionRange(titleInput.value.length, titleInput.value.length);
+    }
+    var findBtn = document.getElementById("findBtn");
+    if (findBtn) findBtn.onclick = handleLookup;
+
+    var movieMinutesInput = document.getElementById("movieMinutesInput");
+    if (movieMinutesInput) movieMinutesInput.oninput = function () { state.movieMinutes = movieMinutesInput.value; refreshComputedOnly(); };
+
+    var episodesInput = document.getElementById("episodesInput");
+    if (episodesInput) episodesInput.oninput = function () { state.episodes = episodesInput.value; refreshComputedOnly(); };
+    var episodeMinutesInput = document.getElementById("episodeMinutesInput");
+    if (episodeMinutesInput) episodeMinutesInput.oninput = function () { state.episodeMinutes = episodeMinutesInput.value; refreshComputedOnly(); };
+
+    var seriesHoursInput = document.getElementById("seriesHoursInput");
+    if (seriesHoursInput) seriesHoursInput.oninput = function () { state.seriesTotalHours = seriesHoursInput.value; refreshComputedOnly(); };
+    var seriesMinutesInput = document.getElementById("seriesMinutesInput");
+    if (seriesMinutesInput) seriesMinutesInput.oninput = function () { state.seriesTotalMinutes = seriesMinutesInput.value; refreshComputedOnly(); };
+
+    var dateInput = document.getElementById("dateInput");
+    if (dateInput) dateInput.onchange = function () { state.date = dateInput.value; };
+
+    var addBtn = document.getElementById("addBtn");
+    if (addBtn) addBtn.onclick = handleAdd;
+
+    root.querySelectorAll("[data-delete]").forEach(function (btn) {
+      btn.onclick = function () { handleDelete(btn.getAttribute("data-delete")); };
+    });
+
+    // Debounced full re-render on numeric inputs so the computed total updates live
+    // without losing focus: we re-render only the computed box + button state via light touch.
+    function refreshComputedOnly() {
+      var total = computedTotal();
+      // Full render is simplest and safe here; inputs keep value from state on next render.
+      // To avoid focus loss, we just update text nodes directly instead of full render.
+      var addBtnEl = document.getElementById("addBtn");
+      var existingBox = root.querySelector(".computed-box .mono");
+      if (existingBox) existingBox.textContent = formatDuration(total);
+    }
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
